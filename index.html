@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#173c31">
+  <meta name="description" content="佰金生命健康会客厅单城年度会员经营测算。查看年费收入、履约变动成本、获客分摊、经营结余和盈亏平衡。">
+  <title>会员经营测算 · 佰金生命健康会客厅</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f3f5f1;
+      --surface: #fff;
+      --tint: #edf4ed;
+      --ink: #182c25;
+      --muted: #52635b;
+      --line: #d9e2da;
+      --forest: #205744;
+      --forest-dark: #173c31;
+      --positive: #205744;
+      --negative: #9a3d2f;
+      --delivery: #62836d;
+      --acquisition: #bb8551;
+      --fixed: #b7c4bb;
+      --radius: 1.25rem;
+      --font: system-ui, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-padding-top: 1.5rem; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font: 1rem/1.58 var(--font); }
+    button, input { font: inherit; }
+    a { color: inherit; text-underline-offset: 0.2em; }
+    button { cursor: pointer; }
+    a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; }
+    h1, h2, h3, p, dl, dd { margin: 0; }
+    h2 { font-size: 1.42rem; line-height: 1.3; letter-spacing: -0.025em; }
+    h3 { font-size: 1.05rem; line-height: 1.45; }
+    [hidden] { display: none !important; }
+    .shell { width: min(100% - 3.5rem, 75rem); margin-inline: auto; }
+    .num { font-variant-numeric: tabular-nums; }
+    .skip { position: absolute; left: 1rem; top: -5rem; z-index: 3; padding: 0.5rem 0.8rem; background: var(--surface); }
+    .skip:focus { top: 0.8rem; }
+
+    .masthead { border-bottom: 1px solid var(--line); }
+    .masthead-inner { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 4.25rem; }
+    .brand { display: inline-flex; align-items: center; gap: 0.7rem; min-width: 0; text-decoration: none; font-weight: 650; }
+    .wordmark { display: grid; place-items: center; flex: 0 0 2.18rem; height: 2.18rem; border-radius: 0.52rem; background: var(--forest-dark); color: #f8f4e8; font-family: "Songti SC", SimSun, serif; font-size: 1.35rem; }
+    .site-nav { display: flex; align-items: center; gap: 1.25rem; flex-shrink: 0; }
+    .site-nav a { padding: 0.65rem 0; color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    .site-nav a:hover, .site-nav a:focus-visible { color: var(--forest); text-decoration: underline; }
+
+    main { padding-block: 1.55rem 2.4rem; }
+    .hero {
+      position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: end; justify-content: space-between;
+      gap: 2rem; min-height: 11.4rem; margin-bottom: 1.3rem; padding: 2.25rem 2.5rem;
+      border-radius: 1.35rem; color: #f6faef;
+      background: linear-gradient(107deg, #183b30, #254e3f 72%, #315b49);
+    }
+    .hero::after {
+      content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background: repeating-radial-gradient(circle at 91% 50%, transparent 0 1.38rem, rgb(227 239 209 / 13%) 1.41rem 1.46rem, transparent 1.49rem 2.65rem);
+      mask-image: linear-gradient(to right, transparent 29%, #000 75%);
+    }
+    h1 { font-size: clamp(2.15rem, 4.5vw, 3.45rem); line-height: 1.14; letter-spacing: -0.045em; }
+    .hero p { margin-top: 0.75rem; color: #e6efe5; font-size: 1.03rem; }
+    .hero-scope { flex: 0 0 auto; padding: 0.55rem 0.9rem; border: 1px solid rgb(239 247 227 / 30%); border-radius: 0.55rem; background: rgb(21 54 42 / 50%); color: #eef4e7; font-size: 0.9rem; }
+
+    .workspace { display: grid; grid-template-columns: minmax(18rem, 0.82fr) minmax(0, 1.57fr); align-items: stretch; gap: 1.25rem; }
+    .panel { min-width: 0; padding: 1.45rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: 0 0.36rem 1.25rem rgb(23 60 49 / 4%); }
+    .panel h2 { margin-bottom: 0.85rem; }
+    .presets { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-bottom: 1.05rem; }
+    .preset {
+      min-height: 2.65rem; padding: 0.42rem 0.85rem; border: 1px solid var(--line); border-radius: 0.55rem;
+      background: var(--surface); color: var(--ink); font-size: 0.89rem; font-weight: 570;
+    }
+    .preset:hover { border-color: var(--forest); }
+    .preset[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: #fff; }
+    .fields { display: grid; gap: 0.86rem; }
+    .field-title { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.32rem; }
+    .field-title label { font-size: 0.94rem; font-weight: 640; }
+    .help-link { color: var(--forest); white-space: nowrap; font-size: 0.86rem; }
+    .input-wrap {
+      display: flex; align-items: center; gap: 0.45rem; min-height: 2.8rem;
+      padding-inline: 0.8rem; border: 1px solid #cbd8cd; border-radius: 0.58rem; background: #fbfcfa;
+    }
+    .input-wrap:focus-within { border-color: var(--forest); box-shadow: 0 0 0 2px rgb(32 87 68 / 14%); }
+    .input-wrap:has(input[aria-invalid="true"]) { border-color: var(--negative); }
+    .input-wrap input {
+      width: 100%; min-width: 0; min-height: 2.7rem; padding: 0; border: 0; outline: 0; background: transparent; color: var(--ink);
+      appearance: textfield; font-size: 1.02rem; font-weight: 600; font-variant-numeric: tabular-nums;
+    }
+    .input-wrap input::-webkit-inner-spin-button, .input-wrap input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+    .unit { flex: 0 0 auto; color: var(--muted); font-size: 0.86rem; }
+    .form-error, .frozen { margin-top: 0.65rem; color: var(--negative); font-size: 0.9rem; }
+    .form-note { margin-top: 0.95rem; color: var(--muted); font-size: 0.89rem; }
+
+    .result-title { display: flex; justify-content: space-between; align-items: center; gap: 0.7rem; margin-bottom: 0.85rem; }
+    .result-title h2 { margin: 0; }
+    .status { display: flex; align-items: center; flex: 0 0 auto; gap: 0.4rem; color: var(--positive); font-weight: 600; font-size: 0.89rem; }
+    .status::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+    .status[data-tone="negative"], .is-negative { color: var(--negative); }
+    .status[data-tone="neutral"] { color: var(--muted); }
+    .results-main { display: grid; grid-template-columns: minmax(0, 1.26fr) minmax(9rem, 0.92fr); gap: 1.1rem; padding: 1.15rem 1.2rem; border-radius: 0.85rem; background: var(--tint); }
+    .metric-name { color: var(--muted); font-size: 0.91rem; font-weight: 560; }
+    .metric-name a { text-decoration: none; }
+    .metric-name a:hover { text-decoration: underline; }
+    .result-amount {
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.45rem; margin-top: 0.18rem;
+      color: var(--positive); line-height: 1.05;
+    }
+    .result-amount[data-tone="negative"] { color: var(--negative); }
+    .result-amount[data-tone="neutral"] { color: var(--ink); }
+    .result-amount strong { max-width: 100%; overflow-wrap: anywhere; font-size: clamp(2.3rem, 4.1vw, 3.7rem); letter-spacing: -0.065em; }
+    .result-amount strong.long { font-size: clamp(1.45rem, 2.8vw, 2.4rem); }
+    .result-amount span { font-size: 1rem; }
+    .result-secondary { display: grid; align-content: center; gap: 0.5rem; padding-left: 1rem; border-left: 1px solid #cbd9cc; }
+    .result-secondary > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; column-gap: 0.5rem; }
+    .result-secondary dd { font-size: 1.02rem; font-weight: 680; overflow-wrap: anywhere; }
+    .break-explain { margin-top: 0.6rem; color: var(--muted); font-size: 0.9rem; }
+
+    .flow { margin-top: 1.45rem; }
+    .flow h3 { margin-bottom: 0.75rem; }
+    .bar-row + .bar-row { margin-top: 0.75rem; }
+    .bar-label { display: flex; gap: 0.5rem; justify-content: space-between; align-items: baseline; margin-bottom: 0.28rem; }
+    .bar-label a { font-size: 0.97rem; text-decoration: none; }
+    .bar-label a:hover { text-decoration: underline; }
+    .bar-label strong { text-align: right; overflow-wrap: anywhere; }
+    .bar-track { height: 0.65rem; overflow: hidden; display: flex; background: #edf1ec; border-radius: 0.22rem; }
+    .bar { display: block; flex-shrink: 0; width: 0; height: 100%; transition: width 170ms ease-out; }
+    .bar-fees { width: 100%; background: var(--forest); }
+    .bar-delivery { width: 16%; background: var(--delivery); }
+    .bar-acquisition { width: 3%; background: var(--acquisition); }
+    .bar-fixed { width: 33.6%; background: var(--fixed); }
+    .cost-ledger { display: grid; margin-top: 0.8rem; }
+    .cost-ledger > div { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; min-height: 2.35rem; border-bottom: 1px solid #e9eee8; }
+    .cost-ledger > div:last-child { border-bottom: 0; }
+    .cost-ledger dt { display: flex; align-items: center; gap: 0.52rem; font-size: 0.9rem; }
+    .cost-ledger a { text-decoration-color: #aebdb4; }
+    .cost-ledger dd { font-weight: 650; font-size: 0.94rem; text-align: right; overflow-wrap: anywhere; }
+    .swatch { display: inline-block; width: 0.58rem; height: 0.58rem; flex: 0 0 0.58rem; border-radius: 0.13rem; }
+    .swatch-delivery { background: var(--delivery); }
+    .swatch-acquisition { background: var(--acquisition); }
+    .swatch-fixed { background: var(--fixed); }
+
+    .below { margin-top: 1.25rem; }
+    .section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.3rem 0.8rem; margin-bottom: 0.9rem; }
+    .section-head h2 { margin: 0; }
+    .section-head p { color: var(--muted); font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { text-align: right; }
+    th:first-child { text-align: left; }
+    thead th { padding: 0.65rem 0.65rem; background: #edf3ed; color: #344c40; font-size: 0.88rem; font-weight: 650; }
+    thead th:first-child { border-radius: 0.35rem 0 0 0.35rem; }
+    thead th:last-child { border-radius: 0 0.35rem 0.35rem 0; }
+    tbody th, tbody td { padding: 0.73rem 0.65rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+    tbody th, td[data-measure="balance"] { font-weight: 650; }
+    td[data-measure="balance"] { color: var(--positive); }
+    td[data-measure="balance"].is-negative { color: var(--negative); }
+    .mobile-label { display: none; }
+    .terms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem; }
+    .terms-grid h3 { margin-bottom: 0.28rem; color: var(--forest); }
+    .definitions > div { padding: 0.8rem 0.45rem 0.75rem 0; border-bottom: 1px solid #e5ebe5; scroll-margin-top: 0.6rem; }
+    .definitions > div:last-child { border-bottom: 0; }
+    .definitions > div:target { padding-left: 0.55rem; background: var(--tint); border-radius: 0.3rem; }
+    .definitions dt { margin-bottom: 0.2rem; font-weight: 680; }
+    .definitions dd { color: var(--muted); font-size: 1rem; }
+    .site-footer { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 1rem; padding-block: 0.95rem 1.55rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.88rem; }
+    .mobile-summary { display: none; }
+
+    @media (max-width: 60rem) {
+      .workspace { grid-template-columns: minmax(15.6rem, 0.84fr) minmax(0, 1.3fr); gap: 1rem; }
+      .panel { padding: 1.2rem; }
+      .results-main { grid-template-columns: 1fr; gap: 0.8rem; }
+      .result-secondary { grid-template-columns: 1fr 1fr; padding: 0.72rem 0 0; border-top: 1px solid #cbd9cc; border-left: 0; }
+      .result-secondary > div { display: block; }
+    }
+    @media (max-width: 45rem) {
+      .shell { width: calc(100% - 2rem); }
+      .masthead-inner { min-height: 3.65rem; }
+      main { padding-top: 0.92rem; }
+      .hero { min-height: 0; align-items: start; flex-direction: column; gap: 0.75rem; padding: 1.35rem; margin-bottom: 1rem; }
+      .hero::after { mask-image: linear-gradient(to right, transparent 48%, #000 100%); }
+      .hero p { margin-top: 0.48rem; font-size: 1rem; }
+      .hero-scope { padding: 0.25rem 0.55rem; }
+      .workspace { grid-template-columns: 1fr; }
+      .results-main { padding: 0.85rem; }
+      .terms-grid { grid-template-columns: 1fr; gap: 1.05rem; }
+      .panel { padding: 1.12rem; border-radius: 1rem; }
+      .below { margin-top: 1rem; }
+    }
+    @media (max-width: 38rem) {
+      body { padding-bottom: calc(4.1rem + env(safe-area-inset-bottom)); }
+      .mobile-summary {
+        position: fixed; z-index: 2; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-between;
+        align-items: center; gap: 0.7rem; padding: 0.55rem 1rem calc(0.55rem + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--line); background: var(--surface); box-shadow: 0 -0.25rem 1.2rem rgb(23 60 49 / 8%);
+      }
+      .mobile-summary p { display: grid; gap: 0; min-width: 0; font-size: 0.86rem; color: var(--muted); }
+      .mobile-summary strong { color: var(--positive); font-size: 1rem; overflow-wrap: anywhere; }
+      .mobile-summary strong.is-negative { color: var(--negative); }
+      .mobile-summary a { flex: 0 0 auto; padding: 0.45rem 0.7rem; border-radius: 0.45rem; color: #fff; background: var(--forest); text-decoration: none; }
+      .scenarios table, .scenarios tbody { display: block; }
+      .scenarios thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .scenarios tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0.6rem 0; border-top: 1px solid var(--line); }
+      .scenarios tr:first-child { border-top: 0; }
+      .scenarios tbody tr > * { display: grid; gap: 0.03rem; padding: 0.2rem 0.35rem; border: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+      .scenarios tbody th { grid-column: 1 / -1; margin-bottom: 0.12rem; }
+      .scenarios td[data-measure="balance"] { grid-column: 1 / -1; }
+      .mobile-label { display: block; color: var(--muted); font-size: 0.86rem; font-weight: 500; }
+    }
+    @media (max-width: 24rem) {
+      .shell { width: calc(100% - 1.45rem); }
+      .brand { gap: 0.48rem; font-size: 0.9rem; }
+      .wordmark { flex-basis: 1.9rem; height: 1.9rem; font-size: 1.15rem; }
+      .site-nav { gap: 0.65rem; }
+      .site-nav a { font-size: 0.84rem; }
+      .panel { padding: 0.9rem; }
+      .field-title label { font-size: 0.9rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { .bar { transition: none; } }
+  </style>
+</head>
+<body id="top">
+  <a class="skip" href="#calculator">跳到试算</a>
+  <header class="masthead">
+    <div class="shell masthead-inner">
+      <a href="#top" class="brand"><span class="wordmark" aria-hidden="true">佰</span><span>佰金生命健康会客厅</span></a>
+      <nav class="site-nav" aria-label="页面导航">
+        <a href="#calculator">试算</a>
+        <a href="#terms">指标释义</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <h1 id="page-title">会员经营测算</h1>
+        <p>调整会员人数、年费和成本，即时查看经营结余与盈亏平衡点。</p>
+      </div>
+      <div class="hero-scope">单城年度 · 简化税前</div>
+    </section>
+
+    <section id="calculator" class="workspace" aria-label="经营试算">
+      <div class="panel">
+        <h2>试算条件</h2>
+        <div class="presets" aria-label="预设参数" role="group">
+          <button class="preset" type="button" data-preset="latest" aria-pressed="true">上次试算</button>
+          <button class="preset" type="button" data-preset="deck" aria-pressed="false">PPT 基准</button>
+        </div>
+        <form id="conditions" novalidate>
+          <div class="fields">
+            <div>
+              <div class="field-title"><label for="members">全年等效付费会员</label><a class="help-link" href="#term-members" aria-label="全年等效付费会员释义">释义</a></div>
+              <div class="input-wrap"><input id="members" type="number" inputmode="decimal" min="0" max="100000" step="0.1" value="50" required aria-describedby="unit-members"><span class="unit" id="unit-members">人年</span></div>
+            </div>
+            <div>
+              <div class="field-title"><label for="fee">会员年费</label><a class="help-link" href="#term-fee" aria-label="会员年费释义">释义</a></div>
+              <div class="input-wrap"><input id="fee" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" value="50000" required aria-describedby="unit-fee"><span class="unit" id="unit-fee">元 / 人年</span></div>
+            </div>
+            <div>
+              <div class="field-title"><label for="fulfillment">履约变动成本</label><a class="help-link" href="#term-fulfillment" aria-label="履约变动成本释义">释义</a></div>
+              <div class="input-wrap"><input id="fulfillment" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" value="8000" required aria-describedby="unit-fulfillment"><span class="unit" id="unit-fulfillment">元 / 人年</span></div>
+            </div>
+            <div>
+              <div class="field-title"><label for="acquisition">获客分摊</label><a class="help-link" href="#term-acquisition" aria-label="获客分摊释义">释义</a></div>
+              <div class="input-wrap"><input id="acquisition" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" value="1500" required aria-describedby="unit-acquisition"><span class="unit" id="unit-acquisition">元 / 人年</span></div>
+            </div>
+            <div>
+              <div class="field-title"><label for="fixed">年度固定成本</label><a class="help-link" href="#term-fixed" aria-label="年度固定成本释义">释义</a></div>
+              <div class="input-wrap"><input id="fixed" type="number" inputmode="decimal" min="0" max="10000000000" step="0.01" value="840000" required aria-describedby="unit-fixed"><span class="unit" id="unit-fixed">元 / 年</span></div>
+            </div>
+          </div>
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+        </form>
+        <p class="form-note">成本按经营假设试算。会员服务满一年计为 1 人年，半年计为 0.5 人年。</p>
+        <noscript><p class="form-note">浏览器启用 JavaScript 后可调整参数，当前展示上次试算结果。</p></noscript>
+      </div>
+
+      <section class="panel" id="results" aria-labelledby="results-title">
+        <div class="result-title"><h2 id="results-title">年度经营结果</h2><span id="result-state" class="status" data-tone="positive">有结余</span></div>
+        <div class="results-main">
+          <div>
+            <p class="metric-name"><a href="#term-balance">经营结余</a></p>
+            <div class="result-amount" id="result-amount" data-tone="positive"><strong id="balance-value" class="num" aria-live="polite">118.50</strong><span>万元</span></div>
+          </div>
+          <dl class="result-secondary">
+            <div><dt class="metric-name"><a href="#term-break-even">盈亏平衡会员数</a></dt><dd class="num" id="break-even-value">21 人年</dd></div>
+            <div><dt class="metric-name"><a href="#term-contribution">单会员年度贡献</a></dt><dd class="num" id="contribution-value">40,500 元</dd></div>
+          </dl>
+        </div>
+        <p id="break-explain" class="break-explain">盈亏平衡会员数按完整人年向上取整。</p>
+        <p id="frozen" class="frozen" hidden>参数待修正，显示最近一次有效结果。</p>
+
+        <div class="flow">
+          <h3>收入与成本构成</h3>
+          <div class="bar-row">
+            <div class="bar-label"><a href="#term-revenue">年费收入</a><strong class="num" id="revenue-value">250.00 万元</strong></div>
+            <div class="bar-track" aria-hidden="true"><span class="bar bar-fees" id="revenue-bar"></span></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><a href="#term-total-cost">经营成本</a><strong class="num" id="cost-value">131.50 万元</strong></div>
+            <div class="bar-track" aria-hidden="true"><span class="bar bar-delivery" id="delivery-bar"></span><span class="bar bar-acquisition" id="acquisition-bar"></span><span class="bar bar-fixed" id="fixed-bar"></span></div>
+          </div>
+          <dl class="cost-ledger">
+            <div><dt><span class="swatch swatch-delivery" aria-hidden="true"></span><a href="#term-fulfillment">履约变动成本</a></dt><dd id="delivery-total" class="num">40.00 万元</dd></div>
+            <div><dt><span class="swatch swatch-acquisition" aria-hidden="true"></span><a href="#term-acquisition">获客分摊</a></dt><dd id="acquisition-total" class="num">7.50 万元</dd></div>
+            <div><dt><a href="#term-variable">变动成本合计</a></dt><dd id="variable-total" class="num">47.50 万元</dd></div>
+            <div><dt><span class="swatch swatch-fixed" aria-hidden="true"></span><a href="#term-fixed">年度固定成本</a></dt><dd id="fixed-total" class="num">84.00 万元</dd></div>
+          </dl>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel below scenarios" id="scenarios" aria-labelledby="scenario-title">
+      <div class="section-head"><h2 id="scenario-title">会员规模对比</h2><p>沿用上方年费与成本参数，金额单位为万元</p></div>
+      <table aria-label="15、20和90人年经营结果对比">
+        <thead><tr><th scope="col">全年等效会员</th><th scope="col">年费收入</th><th scope="col">履约变动</th><th scope="col">获客分摊</th><th scope="col">固定成本</th><th scope="col">经营结余</th></tr></thead>
+        <tbody>
+          <tr data-scenario="15">
+            <th scope="row">15 人年</th>
+            <td><span class="mobile-label" aria-hidden="true">年费收入</span><span data-value="revenue">75.00</span></td>
+            <td><span class="mobile-label" aria-hidden="true">履约变动</span><span data-value="delivery">12.00</span></td>
+            <td><span class="mobile-label" aria-hidden="true">获客分摊</span><span data-value="acquisition">2.25</span></td>
+            <td><span class="mobile-label" aria-hidden="true">固定成本</span><span data-value="fixed">84.00</span></td>
+            <td data-measure="balance" class="is-negative"><span class="mobile-label" aria-hidden="true">经营结余</span><span data-value="balance">-23.25</span></td>
+          </tr>
+          <tr data-scenario="20">
+            <th scope="row">20 人年</th>
+            <td><span class="mobile-label" aria-hidden="true">年费收入</span><span data-value="revenue">100.00</span></td>
+            <td><span class="mobile-label" aria-hidden="true">履约变动</span><span data-value="delivery">16.00</span></td>
+            <td><span class="mobile-label" aria-hidden="true">获客分摊</span><span data-value="acquisition">3.00</span></td>
+            <td><span class="mobile-label" aria-hidden="true">固定成本</span><span data-value="fixed">84.00</span></td>
+            <td data-measure="balance" class="is-negative"><span class="mobile-label" aria-hidden="true">经营结余</span><span data-value="balance">-3.00</span></td>
+          </tr>
+          <tr data-scenario="90">
+            <th scope="row">90 人年</th>
+            <td><span class="mobile-label" aria-hidden="true">年费收入</span><span data-value="revenue">450.00</span></td>
+            <td><span class="mobile-label" aria-hidden="true">履约变动</span><span data-value="delivery">72.00</span></td>
+            <td><span class="mobile-label" aria-hidden="true">获客分摊</span><span data-value="acquisition">13.50</span></td>
+            <td><span class="mobile-label" aria-hidden="true">固定成本</span><span data-value="fixed">84.00</span></td>
+            <td data-measure="balance"><span class="mobile-label" aria-hidden="true">经营结余</span><span data-value="balance">280.50</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel below" id="terms" aria-labelledby="terms-title">
+      <div class="section-head"><h2 id="terms-title">指标释义</h2></div>
+      <div class="terms-grid">
+        <div>
+          <h3>输入参数</h3>
+          <dl class="definitions">
+            <div id="term-members"><dt>全年等效付费会员</dt><dd>把每位付费会员在本年度内接受服务的期限折算为完整年度。服务一年计 1 人年，服务半年计 0.5 人年。</dd></div>
+            <div id="term-fee"><dt>会员年费</dt><dd>每位会员购买一年约定权益的会费。测算以同一年度价格乘以全年等效会员数。</dd></div>
+            <div id="term-fulfillment"><dt>履约变动成本</dt><dd>会客厅为兑现已付费会员的年度权益，随服务量增加而发生的成本。例如雅集按人增加的茶歇、材料，或按人次结算的外部服务。</dd></div>
+            <div id="term-acquisition"><dt>获客分摊</dt><dd>为招募新会员而发生的邀约、体验活动和渠道支出，可以除以同批实际新增付费会员数，得到每位新客的获客成本。此处为方便比较，统一按人年分摊。实际预算可将新签和续费分别核算。</dd></div>
+            <div id="term-fixed"><dt>年度固定成本</dt><dd>在同一经营规模和服务能力下，每年需要承担的基础开支。PPT 基准为人员 48 万、场地与基础活动 24 万、系统与行政 12 万，合计 84 万元。</dd></div>
+          </dl>
+        </div>
+        <div>
+          <h3>结果指标</h3>
+          <dl class="definitions">
+            <div id="term-revenue"><dt>年费收入</dt><dd>全年等效付费会员数 × 每位会员的年费。预收款按实际到账单独跟踪。</dd></div>
+            <div id="term-variable"><dt>变动成本合计</dt><dd>把每位会员的履约变动成本和获客分摊相加，再乘以全年等效会员数。PPT 基准为每人年 4,500 元加 1,500 元，合计 6,000 元。</dd></div>
+            <div id="term-total-cost"><dt>经营成本</dt><dd>年度履约成本、年度获客分摊与年度固定成本之和。前两项用对应的人均预算乘以全年等效会员数。</dd></div>
+            <div id="term-contribution"><dt>单会员年度贡献</dt><dd>会员年费减去一名会员的履约变动成本与获客分摊。它表示一个完整人年可用于覆盖固定开支的金额。</dd></div>
+            <div id="term-balance"><dt>经营结余</dt><dd>年费收入减去经营成本。模型采用简化税前口径，启动投入、税费、活动增购和企业项目另外核算。</dd></div>
+            <div id="term-break-even"><dt>盈亏平衡会员数</dt><dd>当单会员年度贡献为正，年度固定成本除以单会员年度贡献，再按完整人年向上取整，即为达到收支平衡所需的会员规模。</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="shell site-footer"><span>佰金生命健康会客厅</span><span>基准依据项目商业方案第 14 和 15 页。金额以人民币计。</span></footer>
+  <aside class="mobile-summary" aria-label="当前经营结余">
+    <p>经营结余<strong class="num" id="mobile-balance">118.50 万元</strong></p>
+    <a href="#results">查看结果</a>
+  </aside>
+
+  <script>
+    "use strict";
+
+    const scenarios = {
+      latest: { members: 50, fee: 50000, fulfillment: 8000, acquisition: 1500, fixed: 840000 },
+      deck: { members: 20, fee: 50000, fulfillment: 4500, acquisition: 1500, fixed: 840000 }
+    };
+    const fieldNames = {
+      members: "全年等效付费会员",
+      fee: "会员年费",
+      fulfillment: "履约变动成本",
+      acquisition: "获客分摊",
+      fixed: "年度固定成本"
+    };
+    const byId = (id) => document.getElementById(id);
+    const fields = Object.keys(fieldNames).map((name) => byId(name));
+    const presetButtons = Array.from(document.querySelectorAll("[data-preset]"));
+    const scenarioRows = Array.from(document.querySelectorAll("[data-scenario]"));
+    const formatWan = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    const formatAmount = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
+    const wan = (cents) => formatWan.format(cents / 1000000);
+    const yuan = (cents) => formatAmount.format(cents / 100);
+
+    function calculate(values, members = values.members) {
+      const fee = Math.round(values.fee * 100);
+      const deliveryPerMember = Math.round(values.fulfillment * 100);
+      const acquisitionPerMember = Math.round(values.acquisition * 100);
+      const fixed = Math.round(values.fixed * 100);
+      const tenths = Math.round(members * 10);
+      const annualize = (cents) => Math.round(tenths * cents / 10);
+      const revenue = annualize(fee);
+      const delivery = annualize(deliveryPerMember);
+      const acquisition = annualize(acquisitionPerMember);
+      const cost = delivery + acquisition + fixed;
+      const contribution = fee - deliveryPerMember - acquisitionPerMember;
+      const breakEven = contribution > 0 ? Math.ceil(fixed / contribution) : null;
+      return { revenue, delivery, acquisition, fixed, cost, contribution, breakEven, balance: revenue - cost };
+    }
+
+    function renderResults(result) {
+      const tone = result.balance > 0 ? "positive" : result.balance < 0 ? "negative" : "neutral";
+      const stateLabels = { positive: "有结余", negative: "有缺口", neutral: "收支平衡" };
+      byId("result-state").dataset.tone = tone;
+      byId("result-state").textContent = stateLabels[tone];
+      byId("result-amount").dataset.tone = tone;
+      const balanceDisplay = wan(result.balance);
+      byId("balance-value").textContent = balanceDisplay;
+      byId("balance-value").classList.toggle("long", balanceDisplay.length > 10);
+      byId("mobile-balance").textContent = balanceDisplay + " 万元";
+      byId("mobile-balance").classList.toggle("is-negative", result.balance < 0);
+      byId("contribution-value").textContent = yuan(result.contribution) + " 元";
+
+      let threshold = "无平衡点";
+      let explanation = "单会员年度贡献为零或负数，增加人数无法覆盖固定成本。";
+      if (result.breakEven !== null) {
+        threshold = formatAmount.format(result.breakEven) + " 人年";
+        explanation = "盈亏平衡会员数按完整人年向上取整。";
+      } else if (result.fixed === 0 && result.contribution === 0) {
+        threshold = "全部规模";
+        explanation = "年度固定成本和单会员贡献均为零，各情景收支平衡。";
+      } else if (result.fixed === 0) {
+        threshold = "仅 0 人年";
+        explanation = "年度固定成本为零，增加会员时会产生经营缺口。";
+      }
+      byId("break-even-value").textContent = threshold;
+      byId("break-explain").textContent = explanation;
+
+      const totals = {
+        "revenue-value": result.revenue, "cost-value": result.cost, "delivery-total": result.delivery,
+        "acquisition-total": result.acquisition, "variable-total": result.delivery + result.acquisition, "fixed-total": result.fixed
+      };
+      for (const [id, cents] of Object.entries(totals)) byId(id).textContent = wan(cents) + " 万元";
+
+      const scale = Math.max(result.revenue, result.cost, 1);
+      const bars = { "revenue-bar": result.revenue, "delivery-bar": result.delivery,
+        "acquisition-bar": result.acquisition, "fixed-bar": result.fixed };
+      for (const [id, cents] of Object.entries(bars)) byId(id).style.width = (cents / scale * 100) + "%";
+    }
+
+    function update() {
+      const invalid = fields.filter((field) => !field.validity.valid || !Number.isFinite(field.valueAsNumber));
+      for (const field of fields) field.setAttribute("aria-invalid", String(invalid.includes(field)));
+      byId("form-error").hidden = !invalid.length;
+      byId("frozen").hidden = !invalid.length;
+      if (invalid.length) {
+        byId("form-error").textContent = "请填写有效的" + fieldNames[invalid[0].id] + "。人数最多保留一位小数，金额最多两位小数。";
+        presetButtons.forEach((button) => button.setAttribute("aria-pressed", "false"));
+        return;
+      }
+
+      const values = Object.fromEntries(fields.map((field) => [field.id, field.valueAsNumber]));
+      for (const button of presetButtons) {
+        const preset = scenarios[button.dataset.preset];
+        const selected = fields.every((field) => preset[field.id] === values[field.id]);
+        button.setAttribute("aria-pressed", String(selected));
+      }
+      renderResults(calculate(values));
+      for (const row of scenarioRows) {
+        const result = calculate(values, Number(row.dataset.scenario));
+        for (const cell of row.querySelectorAll("[data-value]")) cell.textContent = wan(result[cell.dataset.value]);
+        row.querySelector('[data-measure="balance"]').classList.toggle("is-negative", result.balance < 0);
+      }
+    }
+
+    for (const button of presetButtons) button.addEventListener("click", () => {
+      const preset = scenarios[button.dataset.preset];
+      for (const field of fields) field.value = preset[field.id];
+      update();
+    });
+    byId("conditions").addEventListener("input", update);
+    byId("conditions").addEventListener("submit", (event) => event.preventDefault());
+    update();
+  </script>
+</body>
+</html>
